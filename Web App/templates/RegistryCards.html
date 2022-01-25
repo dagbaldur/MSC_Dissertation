@@ -1,0 +1,83 @@
+<!doctype html>
+<html>
+<head>
+    <link rel="stylesheet" href="https://maxcdn.bootstrapcdn.com/bootstrap/4.0.0/css/bootstrap.min.css" integrity="sha384-Gn5384xqQ1aoWXA+058RXPxPg6fy4IWvTNh0E263XmFcJlSAwiGgFAW/dAiS6JXm" crossorigin="anonymous">
+    <script src="https://ajax.googleapis.com/ajax/libs/jquery/3.5.1/jquery.min.js"></script>
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/popper.js/1.12.9/umd/popper.min.js" integrity="sha384-ApNbgh9B+Y1QKtv3Rn7W3mgPxhU9K/ScQsAP7hUibX39j7fakFPskvXusvfa0b4Q" crossorigin="anonymous"></script>
+    <script src="https://maxcdn.bootstrapcdn.com/bootstrap/4.0.0/js/bootstrap.min.js" integrity="sha384-JZR6Spejh4U02d8jOt6vLEHfe/JQGiRRSQQxSfFWpi1MquVdAyjUar5+76PVCmYl" crossorigin="anonymous"></script>
+    <script>
+        function cb(selection) {
+            $.getJSON({
+                url: "/callback", data: { 'data': selection }, success: function (result) {
+                    Plotly.newPlot('chart', result, {});;
+                }
+            });
+        };
+        function load_devices(){
+            $.getJSON({
+                url:"/devices",success:function(result){
+                    $.each(result,function(key,val){
+                        $("heya").append(val);
+                    });
+                }
+            });
+        }
+
+        
+
+
+    </script>
+</head>
+<body>
+    <div class='container'>
+        <div class = "row p-2">
+            <div class="col"><a href="/">Analytics Dashboard</a></div>
+            <div class="col"><a href="/listDevs">Registries & Devices</a></div>
+            <div class="col"><a href="/imageList">Image Viewer</a></div>
+        </div>
+        <div class="row my-3">
+            <div class ="col-sm-auto" id="list_results">
+                <h2>IoT Registries</h2>
+            </div>
+        </div>
+        <div class="row">
+            <div class="column">
+                <div class="card-deck" id="registries">
+                    
+                </div>
+            </div>
+        </div>
+    </div>
+</body>
+
+<script>
+    $(document).ready(() => {
+        const $registries = $('#registries');
+        
+        $.getJSON('/registries', (data) => {
+            console.log(data);
+            
+
+            $.each( data, function( index ) {                
+                var reg_card = "<div class='card'><div class='card-body' id='"+ data[index].id +"'><h5 class='card-title'>Registry ID: " + data[index].id + "</h5></div></div>";
+                $registries.append(reg_card)
+                var devices = '/devices?Registry=' + data[index].id;
+                
+                var itms = [];
+                var crd = "#"+data[index].id;
+                $.getJSON(devices,(dev) =>{
+                    itms.push('<p class="card-text"><ul>');
+                    console.log(dev);
+                    $.each(dev,function ( indx ){
+                        itms.push("<li><a href='/device?registryId=" + data[index].id + "&deviceId=" + dev[indx].id + "'>" + dev[indx].id +"</a></li>");
+                    })
+                    itms.push('</ul></p>');
+                    $(crd).append(itms);
+                })
+            });
+            
+        });
+        
+    });
+
+</script>

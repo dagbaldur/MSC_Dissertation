@@ -1,0 +1,96 @@
+<!doctype html>
+<html>
+    <head>
+        <link rel="stylesheet" href="https://maxcdn.bootstrapcdn.com/bootstrap/4.0.0/css/bootstrap.min.css" integrity="sha384-Gn5384xqQ1aoWXA+058RXPxPg6fy4IWvTNh0E263XmFcJlSAwiGgFAW/dAiS6JXm" crossorigin="anonymous">
+        <link rel="stylesheet" type="text/css" href="https://cdn.datatables.net/1.11.3/css/jquery.dataTables.min.css">
+        <script src="https://cdn.plot.ly/plotly-latest.min.js"></script>
+        <script src="https://ajax.googleapis.com/ajax/libs/jquery/3.5.1/jquery.min.js"></script>
+        <script src="https://cdnjs.cloudflare.com/ajax/libs/popper.js/1.12.9/umd/popper.min.js" integrity="sha384-ApNbgh9B+Y1QKtv3Rn7W3mgPxhU9K/ScQsAP7hUibX39j7fakFPskvXusvfa0b4Q" crossorigin="anonymous"></script>
+        <script src="https://maxcdn.bootstrapcdn.com/bootstrap/4.0.0/js/bootstrap.min.js" integrity="sha384-JZR6Spejh4U02d8jOt6vLEHfe/JQGiRRSQQxSfFWpi1MquVdAyjUar5+76PVCmYl" crossorigin="anonymous"></script>
+        <script src="https://cdn.datatables.net/1.11.3/js/jquery.dataTables.min.js"></script>
+    </head>
+    <body>
+        <div class='container'>
+            <div class = "row p-2">
+                <div class="col"><a href="/">Analytics Dashboard</a></div>
+                <div class="col"><a href="/listDevs">Registries & Devices</a></div>
+                <div class="col"><a href="/imageList">Image Viewer</a></div>
+            </div>
+            <div class="row my-3">
+                <div class ="col-sm-auto" id="list_results">
+                    <h2>Analytics Dashboard</h2>
+                </div>
+            </div>
+            <div class="row">
+                <div class ="col-10" id="list_results">
+                    <h4>General Summary</h4>
+                </div>
+            </div>
+            <div class="row">
+                <div class ="col-10" id="list_results">
+                    <p><h6>Dataset</h6></p>
+                    <p>
+                    {{ full_tb | safe }}
+                    </p>
+                </div>
+            </div>
+            <div class="row">
+                <div class ="col-sm" id="analytics_data">
+                    <p><h6>Dataset Statistics</h6></p>
+                    <p>
+                    {{ statTable | safe }}
+                    </p>
+                </div>
+                <div class ="col-7" id="date_graph">
+                    <div id="dateGraph" class="dateGraph"></div>
+                </div>
+            </div>
+            <div class="row">
+                <div class ="col-10" id="list_results">
+                    <h4>Data by Registry</h4>
+                </div>
+            </div>
+            <div class="row">
+                <div class ="col-md" id="registry_graph">
+                    <div id="regGraph" class="regGraph"></div>
+                </div>
+            </div>
+            <div class="row">
+                <div class ="col-10" id="list_results">
+                    <h4>Data by Devices</h4>
+                </div>
+            </div>
+            <div class="row">
+                <div class ="col-md" id="device_graph">
+                    <div id="devGraph" class="devGraph"></div>
+                </div>
+            </div>
+
+        </div>
+    </body>
+
+    <script type='text/javascript'>
+        var regGraph = {{ regGraph | safe }};
+        var devGraph = {{ devGraph | safe }};
+        var dateGraph = {{ dateGraph | safe }};
+        
+        Plotly.plot('regGraph', regGraph, {});
+        Plotly.plot('devGraph', devGraph, {});
+        Plotly.plot('dateGraph', dateGraph, {});
+
+        $(document).ready(function(){
+            $('#statistics').DataTable(
+                {
+                    searching:false,
+                    paging:false,
+                    info:false,
+                }
+            );
+        })
+
+        $(document).ready(function(){
+            $('#full_ds').DataTable(
+            );
+        })
+    </script>
+</html>

@@ -1,0 +1,91 @@
+<!doctype html>
+<html>
+<head>
+    <link rel="stylesheet" type="text/css" href="https://cdn.datatables.net/1.11.3/css/jquery.dataTables.min.css">
+    <script src="https://cdn.plot.ly/plotly-latest.min.js"></script>
+    <script src="https://ajax.googleapis.com/ajax/libs/jquery/3.5.1/jquery.min.js"></script>
+    <script src="https://cdn.datatables.net/1.11.3/js/jquery.dataTables.min.js"></script>
+    <script>
+        function cb(selection) {
+            $.getJSON({
+                url: "/callback", data: { 'data': selection }, success: function (result) {
+                    Plotly.newPlot('chart', result, {});;
+                }
+            });
+        };
+        function load_devices(){
+            $.getJSON({
+                url:"/devices",success:function(result){
+                    $.each(result,function(key,val){
+                        $("heya").append(val);
+                    });
+                }
+            });
+        }
+
+        
+
+
+    </script>
+</head>
+
+<body style="font-family:arial, sans-serif">
+    <h1>GDP per Capita Over Time</h1>
+    <h2>Choose your country</h2>
+    <p>Make sure you spell it correctly with capital letter(s), e.g. United Kingdom</p>
+    <input type="text" id="fname" name="fname" onchange="cb(this.value)">
+    <div id="chart" class="chart"></div>
+    <div id="devs">
+        <table id='devices' class="display" style="width:100%">
+            <thead><tr><th>ID</th><th>Name</th><th>Last seen</th><th>Last event date</th><th>Last error date</th><th>Last error</th></tr></thead>
+            <tbody id="device_list"></tbody>            
+        </table>
+    </div>
+
+    <script>
+        $(document).ready(() => {
+            const $devices = $('#device_list');
+            const $raw = $('pre');
+            
+            $devices.text('Loading devices...');
+        
+            $.getJSON('/deviceStates', (data) => {
+                var items = [];
+                console.log(data)
+                
+                $.each( data, function( index ) {
+                    var ts = new Date(data[index].last_heartbeat * 1000);
+                    var tevnt = new Date(data[index].last_event * 1000);
+                    var terror = new Date(data[index].last_error_time * 1000);
+
+                    var last_seen = ts.getFullYear() + '/' + ts.getMonth() + '/' + ts.getDate() + ' ' + ts.getHours() + ':' + ts.getMinutes() + ':' + ts.getSeconds();
+                    var last_event = tevnt.getFullYear() + '/' + tevnt.getMonth() + '/' + tevnt.getDate() + ' ' + tevnt.getHours() + ':' + tevnt.getMinutes() + ':' + tevnt.getSeconds();
+                    var last_error = terror.getFullYear() + '/' + terror.getMonth() + '/' + terror.getDate() + ' ' + terror.getHours() + ':' + terror.getMinutes() + ':' + terror.getSeconds();
+
+                    items.push("<tr><td>" + data[index].num_id + "</td><td><a href='/device?deviceId=" + index + "'>" + index + "</a></td><td>" + last_seen + "</td><td>" + last_event + "</td><td>" + last_error + "</td><td>" + data[index].last_error + "</td></tr>");
+                });
+
+                $devices.html(items);
+        
+                $raw.text(JSON.stringify(data, undefined, 2));
+            });
+            
+        });
+
+    </script>
+</body>
+
+<script>
+    d = {{ graphJSON | safe }};
+    Plotly.newPlot('chart', d, {});
+</script>
+<script>
+    $(document).ready(function() {
+        $('#devices').DataTable({
+            "columnDefs": [
+                { "searchable": false, "targets": 0 }
+            ]
+        });
+    } );
+</script>
+</html>

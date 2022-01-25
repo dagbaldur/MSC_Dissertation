@@ -1,0 +1,134 @@
+<!doctype html>
+<html>
+<head>
+    <link rel="stylesheet" href="https://maxcdn.bootstrapcdn.com/bootstrap/4.0.0/css/bootstrap.min.css" integrity="sha384-Gn5384xqQ1aoWXA+058RXPxPg6fy4IWvTNh0E263XmFcJlSAwiGgFAW/dAiS6JXm" crossorigin="anonymous">
+    <link rel="stylesheet" type="text/css" href="https://cdn.datatables.net/1.11.3/css/jquery.dataTables.min.css">
+    <script src="https://ajax.googleapis.com/ajax/libs/jquery/3.5.1/jquery.min.js"></script>
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/popper.js/1.12.9/umd/popper.min.js" integrity="sha384-ApNbgh9B+Y1QKtv3Rn7W3mgPxhU9K/ScQsAP7hUibX39j7fakFPskvXusvfa0b4Q" crossorigin="anonymous"></script>
+    <script src="https://maxcdn.bootstrapcdn.com/bootstrap/4.0.0/js/bootstrap.min.js" integrity="sha384-JZR6Spejh4U02d8jOt6vLEHfe/JQGiRRSQQxSfFWpi1MquVdAyjUar5+76PVCmYl" crossorigin="anonymous"></script>
+    <script src="https://cdn.datatables.net/1.11.3/js/jquery.dataTables.min.js"></script>
+</head>
+<body>
+    <div class='container'>
+        <div class = "row p-2">
+            <div class="col"><a href="/">Analytics Dashboard</a></div>
+            <div class="col"><a href="/listDevs">Registries & Devices</a></div>
+            <div class="col"><a href="/imageList">Image Viewer</a></div>
+        </div>
+        <div class="row my-3">
+            <div class ="col-sm-auto" id="list_results">
+                <h2>Device Dashboard</h2>
+            </div>
+        </div>
+        <div class="row">
+            <div class="col-md-4">            
+                <div class="column" id="device">
+                </div>
+                <div class ="column" id="info">
+                    <div class="alert alert-danger" id="error">
+                        <button type="button" class="close" data-dismiss="alert">x</button>
+                        <strong>Something went wrong!</strong>
+                        <div id='ErrorMsg'></div>
+                     </div>
+                     <div class="alert alert-success" id="information">
+                        <button type="button" class="close" data-dismiss="alert">x</button>
+                        <div id='InfoMsg'></div>
+                     </div>           
+                </div>
+            </div>
+        </div>
+        <div class="row">
+            
+        </div>
+
+        <div class="row">
+            <div class ="col-sm-auto" id="list_results">
+                <h2>No images available for this device</h2>
+            </div>
+        </div>
+    </div>
+</body>
+
+<script>
+    var device = {{ device|tojson }};
+    const $device = $('#device');
+    var msg = "Data not available";
+    
+    var inf = "<table class='table table-hover' id='tooltip'><caption>Device log</caption><tbody><tr class='table-primary'><th>Device ID</th><td>"+device+"</td></tr>";
+    
+    var seen = "<tr><th scope='row'>Last seen date</th><td>"+msg+"</td></tr>"
+    var error_time = "<tr><th scope='row'>Last error date</th><td>"+msg+"</td></tr>"
+    var last_error = "<tr ><th scope='row'>Error msg.</th><td>"+msg+"</td></tr></table>"
+    
+    $device.append(inf+seen+error_time+last_error);
+    $device.append("<div class='form-group border p-1' id='commands'><label for='commands'><b>Command Center</b></label><input type='text' class='form-control form-control-sm' id='command' placeholder='Write a command and press enter'><small id='commandsHelp' class='form-text text-muted'>Write <b>commands</b> to list available commands.</small></div>");
+
+    $(document).ready(function(){
+        $("#error").hide();
+        $('#information').hide();
+
+        $('#ds_device').DataTable({
+            "order":[[2,"desc"]],
+            "scrollY":"400px",
+            "columnDefs":[
+                {
+                    "targets":[0],
+                    "visible":false,
+                    "searchable":false
+                }
+            ]
+        }
+        );
+    });
+    
+
+    $('#command').keyup(function(event){
+        if(event.keyCode === 13){
+            var value = $("#command").val().toLowerCase();
+            switch(value){
+                case "shoot":
+                    $("#command").val("");
+                    setInformation("Picture command sent!",2000);
+                    break;
+                case "alert":
+                    $("#command").val("");
+                    setInformation("Alert command sent!",2000);
+                    break;
+                case "reset":
+                    $("#command").val("");
+                    setInformation("Reset command sent!",2000);
+                    break;
+                case "commands":
+                    $("#command").val("");
+                    var commands = "The following commands are available for this device:<ul>";
+                    commands += "<li><b>Shoot</b>: Take a new picture</li>";
+                    commands += "<li><b>Alert</b>: Send an alert</li>";
+                    commands += "<li><b>Reset</b>: Reset the status</li>";
+                    commands += "<li><b>Commands</b>: List commands</li>";
+                    commands += "<ul>";
+                    
+                    setInformation(commands,5000);
+                    break;
+                default:
+                    $("#command").val("");
+                    setError("This command does not exist. Enter <b>commands</b> to see the available commands.",3000)
+                    break;
+            }
+        }
+    });
+
+    function setError(message,time){
+        $('#ErrorMsg').empty().append(message);
+            $('#error').fadeTo(time,500).slideUp(500,function(){
+                $("#error").slideUp(500);
+        });
+    }
+
+    function setInformation(message,time){
+        $('#InfoMsg').empty().append(message);
+        $('#information').fadeTo(time,500).slideUp(500,function(){
+            $("#information").slideUp(500);
+        });
+    }
+    
+</script>

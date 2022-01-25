@@ -1,0 +1,244 @@
+<!doctype html>
+<html>
+<head>
+    <link rel="stylesheet" href="https://maxcdn.bootstrapcdn.com/bootstrap/4.0.0/css/bootstrap.min.css" integrity="sha384-Gn5384xqQ1aoWXA+058RXPxPg6fy4IWvTNh0E263XmFcJlSAwiGgFAW/dAiS6JXm" crossorigin="anonymous">
+    <link href = "https://code.jquery.com/ui/1.10.4/themes/ui-lightness/jquery-ui.css" rel = "stylesheet">
+    <script src="https://ajax.googleapis.com/ajax/libs/jquery/3.5.1/jquery.min.js"></script>
+    <script src = "https://code.jquery.com/ui/1.10.4/jquery-ui.js"></script>
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/popper.js/1.12.9/umd/popper.min.js" integrity="sha384-ApNbgh9B+Y1QKtv3Rn7W3mgPxhU9K/ScQsAP7hUibX39j7fakFPskvXusvfa0b4Q" crossorigin="anonymous"></script>
+    <script src="https://maxcdn.bootstrapcdn.com/bootstrap/4.0.0/js/bootstrap.min.js" integrity="sha384-JZR6Spejh4U02d8jOt6vLEHfe/JQGiRRSQQxSfFWpi1MquVdAyjUar5+76PVCmYl" crossorigin="anonymous"></script>
+</head>
+<body>
+    <div class='container'>
+        <div class = "row p-2">
+            <div class="col"><a href="/">Analytics Dashboard</a></div>
+            <div class="col"><a href="/listDevs">Registries & Devices</a></div>
+            <div class="col"><a href="/imageList">Image Viewer</a></div>
+        </div>
+        <div class="row my-3">
+            <div class ="col-sm-auto">
+                <h2>Image Viewer</h2>
+            </div>
+        </div>
+        
+        <div class="row">
+            <div class ="rounded p-3 h-100 col-md-auto">
+                <label for='date'><b>Search by date range</b></label>
+                <div class='input-group input-daterange border p-1'>
+                    <input type='text' class='form-control' id='date1'>
+                    <div class="input-group-addon">to</div>
+                    <input type='text' class='form-control' id='date2'>
+                </div>
+            </div>
+            <div class ="rounded p-3 h-100 col-md-auto">
+                <label for='registry'><b>Search by Registry ID</b></label>
+                <div class='form-group border p-1'>
+                    <select class="form-select" aria-label="Default select example" id="registry">
+                        <option selected value='9999'>Select a registry ID</option>
+                      </select>
+                </div>
+            </div>
+            <div class ="rounded p-3 h-100 col-md-auto">
+                <label for='device'><b>Search by device ID</b></label>
+                <div class='form-group border p-1'>
+                    <input type='text' class='form-control form-control-sm' id='device' placeholder='Enter a device ID'>
+                </div>
+            </div>
+        </div>
+        <div class="row" id='info_main'>
+            <div class ="rounded p-3 bg-info col-md-auto text-white" id="info">
+                Search by date, registry ID, or device ID to display results. The results are limited to the first 100 images.
+            </div>
+        </div>
+        <div id="img_container">
+            
+        </div>
+    </div>
+</body>
+
+<script>
+    
+    $(document).ready(() => {
+        $( "#date1" ).datepicker(
+            { dateFormat: 'yy-mm-dd' }
+        );
+        $( "#date2" ).datepicker(
+            { dateFormat: 'yy-mm-dd' }
+        );
+
+        var regs = $("#registry");
+        
+        $.getJSON('/registries', (registries) => {
+            $.each( registries, function( index ) { 
+                var fig_list = '<option value="'+String(index)+'">' + registries[index]['id'] + '</option>';
+                regs.append(fig_list);
+            });
+        });
+
+        globalThis.temp = "";
+             
+        
+    });
+
+    $('#date1').on('change', function() {
+        
+        var date2 = $("#date2").datepicker('getDate');
+        var date = $('#date1').datepicker('getDate');
+        $('#date2').datepicker("option", "minDate", date);
+        if(date !== null && date2 !== null){
+            $('#img_container').empty();
+            var d1 = toTimestamp(date.getFullYear(),date.getMonth(),date.getDate());
+            var d2 = toTimestamp(date2.getFullYear(),date2.getMonth(),date2.getDate());
+            var dateRange = d1 + "|" + d2;
+            getImages("date",dateRange);
+        }
+        resetRegistry();
+        clearDev();
+    });
+
+    $('#date2').on('change', function() {
+        var date2 = $("#date2").datepicker('getDate');
+        var date = $('#date1').datepicker('getDate');
+        console.log(date.getTime());
+        $('#date1').datepicker("option", "maxDate", date2);
+        if(date !== null && date2 !== null){
+            $('#img_container').empty();
+            var d1 = toTimestamp(date.getFullYear(),date.getMonth(),date.getDate());
+            var d2 = toTimestamp(date2.getFullYear(),date2.getMonth(),date2.getDate());
+            var dateRange = d1 + "|" + d2;
+            getImages("date",dateRange);
+        }
+        clearDev();
+        resetRegistry();
+    });
+
+    $('#registry').on('change', function() {
+        clearDev();
+        clearDates();
+        $('#img_container').empty();
+        var selected = $("#registry option:selected").text();
+        getImages('registry',selected);
+    });
+
+    $('#device').keyup(function(event){
+        if(event.keyCode === 13){
+            $('#img_container').empty();
+            clearDates();
+            resetRegistry();
+            getImages('device');
+        } 
+    });
+
+    function resetRegistry(){
+        $("#registry").val('9999')//.change();
+    };
+
+    function clearDev(){
+        $("#device").val("");
+    };
+
+    function clearDates(){
+        $('#date1').datepicker("option", "maxDate", null);
+        $("#date1").val("");
+        $('#date2').datepicker("option", "minDate", null);
+        $("#date2").val("");
+    };
+
+    function getImages(queryType,value){
+        var args = '/queryImage?query='+queryType+'&value='+value;
+        getJson(args);
+    };
+
+    function getJson(value){
+        $.getJSON({
+            url:value, success:function(data){
+                var i = 0;
+                var id2 = "a"+String(i);
+                $.each(data,function(key,val){
+                    var temp = "";
+                    if(i % 4 === 0){
+                        id = i;
+                        var mcontainer = '<div class="py-1 row" id = "'+id+'">';
+                        $('#img_container').append(mcontainer);
+                    }
+                    var fig_div = '<div class="border border-dark col-sm-2 ml-1"><div class ="column " id="info"><figure class="figure">';
+                    
+                    id2 = "a"+String(i);
+                    var img_src = "/image?imageName="+val.filename;
+                    img_src = String(id2) + "+" + img_src;
+
+                    var crack = val.prediction.crack;
+                    var string_crack = "";
+                    if(crack){
+                        string_crack = "<div class='my-1 alert alert-danger'> FISSURE EVENT DETECTED </div>";
+                        fig_div += '<div id="'+id2+'" class="bg-danger" style="width: 135px;">';
+                    }else{
+                        fig_div += '<div id="'+id2+'" style="width: 135px;">';    
+                    }
+                    
+                    fig_div += '</div>';
+                    getValues(img_src);
+                    
+                    var timefound = new Date(val.time * 1000);
+                    var date = timefound.getDate();
+                    var month = timefound.getMonth();
+                    var year = timefound.getFullYear();
+                    var hours = timefound.getHours();
+                    // Minutes part from the timestamp
+                    var minutes = "0" + timefound.getMinutes();
+                    // Seconds part from the timestamp
+                    var seconds = "0" + timefound.getSeconds();
+
+                    // Will display time in 10:30:23 format
+                    var formattedTime = date + '-' + month + '-' + year + ' ' +hours + ':' + minutes.substr(-2) + ':' + seconds.substr(-2);
+
+                    fig_div += '<figcaption class="figure-caption">'+string_crack+'Image taken on '+val.time+' from device '+val.device+'</figcaption>';
+                    fig_div += '</figure></div></div>';
+                    
+                    $('#'+id).append(fig_div);
+                    ++i;
+                });
+            }
+        });
+    };
+
+    function getValues(id_in){
+        //console.log(a);
+        console.log(id_in);
+        var id = id_in.split('+')[0];
+        var img_src = id_in.split('+')[1];
+        
+        $.getJSON({
+            url:img_src,success:function(result){
+                
+                $.each(result,function(key,val){
+                    var fig_div = '<img src="data:image/jpg;base64,'+ val +'" class="m-1 figure-img img-fluid rounded" alt="Placeholder">';
+                    $('#'+String(id)).append(fig_div);
+                });
+                
+            }
+        })
+    };
+
+    
+
+    function setError(message,time){
+        $('#ErrorMsg').empty().append(message);
+            $('#error').fadeTo(time,500).slideUp(500,function(){
+                $("#error").slideUp(500);
+        });
+    }
+
+    function setInformation(message,time){
+        $('#InfoMsg').empty().append(message);
+        $('#information').fadeTo(time,500).slideUp(500,function(){
+            $("#information").slideUp(500);
+        });
+    }
+
+    function toTimestamp(y,m,d){
+        var datum = new Date(Date.UTC(y,m,d,0,0,0));
+        return datum.getTime()/1000;
+    }
+    
+</script>
