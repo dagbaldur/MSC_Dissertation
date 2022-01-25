@@ -9,6 +9,6 @@ This dissertation proposes a 7-layer architecture design for a distributed syste
 
 This repository contains all the source codes, datasets, and documentation pertaining the design, development, and implementation of the proposed architectural design for an NDE distributed platform for concrete surface fissure detection, which was part of a dissertation submitted in partial fulfilment of the requirements of Glasgow Caledonian University for the degree of Master of Science in Big Data Technologies.
 
-@Author: Guillermo Navarro.
+##Contact
 
-@Year: 2021
+Please contact Guillermo Navarro Magana for questions about the source files of this repository.
